@@ -6,7 +6,7 @@ MainMode::MainMode(uint32_t timeInterval) : Mode()
 void MainMode::init(uint8_t param)
 {
     _needRefreshTime = true;
-    _showMode = false;
+    showMode = false;
 }
 
 void MainMode::loop() 
@@ -37,11 +37,11 @@ void MainMode::loop()
             modeSelector.setMode(Modes::Weather, 0);
         }
 
-        if (_showMode) 
+        if (showMode) 
         {
-            if (_showModeSecCounter > SHOW_EFFECTS_MODE_TIMEOUT*2) 
+            if (showModeSecCounter > SHOW_EFFECTS_MODE_TIMEOUT*2) 
             {
-                _showMode = false;
+                showMode = false;
                 _needRefreshTime = true;
                 glitch.resume();
                 flip.resume();
@@ -54,8 +54,8 @@ void MainMode::loop()
                 anodeStates[3] = true;
                 anodeStates[4] = false;
                 anodeStates[5] = false;
-                _showModeSecCounter++;
-                sendToIndicators(0, _modeValue, 0, true);
+                showModeSecCounter++;
+                sendToIndicators(0, modeValue, 0, true);
             }
         }
         else if (secs >= 59) 
@@ -79,19 +79,19 @@ void MainMode::buttonsLoop()
     if (effect != NULL) 
     {
         effect->switchMode();
-        _modeValue = effect->mode();
+        modeValue = effect->mode();
         glitch.suspend();
         flip.suspend();
-        _showModeSecCounter = 0;
-        _showMode = true;
+        showModeSecCounter = 0;
+        showMode = true;
     }
 
     if (irKey == IR_AUTOWEATHER)
     {
         _autoShowWeather = !_autoShowWeather;
-        _modeValue = _autoShowWeather;
-        _showModeSecCounter = 0;
-        _showMode = true;
+        modeValue = _autoShowWeather;
+        showModeSecCounter = 0;
+        showMode = true;
     }
 
     if (btnLeft.isHolded()) modeSelector.setMode(Modes::Setup, 0); // date-time setup

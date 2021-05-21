@@ -1,21 +1,32 @@
 RadioMode::RadioMode(uint32_t timeInterval)
 {
 	timer.setInterval(timeInterval);
+	uint8_t lo, hi;
+	EEPROM.get(EEPROM_CELL_FM_CURRENT_FREQUENCY_L, lo);
+	EEPROM.get(EEPROM_CELL_FM_CURRENT_FREQUENCY_H, hi);
+	_currentFrequency = makeWord(hi, lo);
+	EEPROM.get(EEPROM_CELL_FM_VOLUME, _volume);
+	for (uint8_t i = 0; i < 10; i++)
+	{
+		EEPROM.get(EEPROM_CELL_FM_0_FREQUENCY_L + i*2, lo);
+		EEPROM.get(EEPROM_CELL_FM_0_FREQUENCY_H + i*2, hi);
+		_frequencyPresets[i] = makeWord(hi, lo);
+	}
 }
 
 void RadioMode::init(uint8_t param)
 {
 	radio.enable(true);
-	_frequency = radio.getFrequency();
-	_volume = radio.getVolume();
+	radio.reset();
+	if (_currentFrequency != 0) radio.setFrequency(_currentFrequency);
+	else _currentFrequency = radio.getFrequency();
+	radio.setVolume(_volume);
 }
 
 void RadioMode::loop()
 {
 	Mode::loop();
 	if (!timer.isReady()) return;
-	if (_volumeCounter > 20) _showVolume = false; // 20 = 1 секунда
-	else _volumeCounter++;
 	show();
 }
 
@@ -38,26 +49,43 @@ void RadioMode::show()
 	anodeStates[4] = false;
 	anodeStates[5] = false;
 
-	if (_showVolume)
+	if (showMode) // show preset
+	{		
+		anodeStates[0] = true;
+		h = modeValue;
+		if (showModeSecCounter > 20) showMode = false; // 20 = 1 секунда
+		else showModeSecCounter++;
+	}
+	else if (_showVolume) // show current volume
 	{
 		anodeStates[4] = true;
 		anodeStates[5] = true;
 		s = _volume;
+		if (showModeSecCounter > 20) _showVolume = false; // 20 = 1 секунда
+		else showModeSecCounter++;
 	}
-	else
+	else // show frequency
 	{
-		anodeStates[2] = true;
-		anodeStates[3] = true;
-		anodeStates[4] = true;
-
-		m = _frequency / 100;
-		s = _frequency % 100;
-		if (_frequency >= 10000)
+		bool lampStates = true;
+		if (_setPreset)
 		{
-			anodeStates[1] = true;
+			showModeSecCounter++;
+			if (showModeSecCounter > 10) lampStates = false;
+			if (showModeSecCounter > 20) showModeSecCounter = 0;
+		}
+
+		anodeStates[2] = lampStates;
+		anodeStates[3] = lampStates;
+		anodeStates[4] = lampStates;
+
+		m = _currentFrequency / 100;
+		s = _currentFrequency % 100;
+		if (_currentFrequency >= 10000)
+		{
+			anodeStates[1] = lampStates;
 			h = 1;
-			m = (_frequency - 10000) / 100;
-			s = (_frequency - 10000) % 100;
+			m = (_currentFrequency - 10000) / 100;
+			s = (_currentFrequency - 10000) % 100;
 		}
 	}
 	sendToIndicators(h, m, s, true);
@@ -71,39 +99,45 @@ void RadioMode::buttonsLoop()
 	if (effect != NULL)
 	{
 		effect->switchMode();
-		_modeValue = effect->mode();
+		modeValue = effect->mode();
 		glitch.suspend();
 		flip.suspend();
-		_showModeSecCounter = 0;
-		_showMode = true;
+		showModeSecCounter = 0;
+		showMode = true;
 	}
 
 	if (btnLeft.isHolded() || irKey == IR_BACKWARD)
 	{
 		radio.seekDown(seekProgress);
 		delay(10);
-		_frequency = radio.getFrequency();
+		_currentFrequency = radio.getFrequency();
+		EEPROM.put(EEPROM_CELL_FM_CURRENT_FREQUENCY_L, lowByte(_currentFrequency));
+		EEPROM.put(EEPROM_CELL_FM_CURRENT_FREQUENCY_H, highByte(_currentFrequency));
 	}
 
 	if (btnMiddle.isHolded() || irKey == IR_FORWARD)
 	{
 		radio.seekUp(seekProgress);
 		delay(10);
-		_frequency = radio.getFrequency();
+		_currentFrequency = radio.getFrequency();
+		EEPROM.put(EEPROM_CELL_FM_CURRENT_FREQUENCY_L, lowByte(_currentFrequency));
+		EEPROM.put(EEPROM_CELL_FM_CURRENT_FREQUENCY_H, highByte(_currentFrequency));
 	}
 
 	if ((btnLeft.isClick() || irKey == IR_VOLDOWN || irKey == IR_VOLDOWN1))
 	{
 		if (_volume != 0) radio.setVolume(--_volume);
-		_volumeCounter = 0;
+		showModeSecCounter = 0;
 		_showVolume = true;
+		EEPROM.put(EEPROM_CELL_FM_VOLUME, _volume);
 	}
 
 	if ((btnMiddle.isClick() || irKey == IR_VOLUP || irKey == IR_VOLUP1))
 	{
 		if (_volume < MAXVOLUME) radio.setVolume(++_volume);
-		_volumeCounter = 0;
+		showModeSecCounter = 0;
 		_showVolume = true;
+		EEPROM.put(EEPROM_CELL_FM_VOLUME, _volume);
 	}
 
 	if (btnRight.isHolded() || irKey == IR_RADIOONOFF)
@@ -111,4 +145,42 @@ void RadioMode::buttonsLoop()
 		radio.enable(false);
 		modeSelector.setMode(Modes::Main, 0); // main
 	}
+
+	if (irKey != 0 && _setPreset) _trySetPresetFrequency();
+	if (irKey == IR_SET)
+	{
+		_setPreset = !_setPreset;
+		if (_setPreset) showModeSecCounter = 0;
+	}
+
+	if (irKey != 0 && !_setPreset) _tryGetPresetFrequency();
+}
+
+void RadioMode::_tryGetPresetFrequency()
+{
+	for (uint8_t i = 0; i < 10; i++)  
+		if (irKey == _irPresetsKeys[i] && _frequencyPresets[i] != 0)
+		{
+			_currentFrequency = _frequencyPresets[i];
+			radio.setFrequency(_currentFrequency);
+			modeValue = i * 10;
+			showMode = true;
+			showModeSecCounter = 0;
+		}
+}
+
+void RadioMode::_trySetPresetFrequency()
+{
+	for (uint8_t i = 0; i < 10; i++)  
+		if (irKey == _irPresetsKeys[i])
+		{
+			_setPreset = false;
+			_frequencyPresets[i] = _currentFrequency;
+			EEPROM.put(EEPROM_CELL_FM_0_FREQUENCY_L + i*2, lowByte(_currentFrequency));
+			EEPROM.put(EEPROM_CELL_FM_0_FREQUENCY_H + i*2, highByte(_currentFrequency));
+			modeValue = i * 10;
+			showMode = true;
+			showModeSecCounter = 0;
+		}
+	_setPreset = false;
 }

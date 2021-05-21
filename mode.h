@@ -2,6 +2,7 @@
 #include <GyverButton.h>
 #include "timerMinim.h"
 #include "effect.h"
+#include "irCodes.h"
 
 #define EFFECTS_COUNT 6
 
@@ -24,8 +25,10 @@ protected:
 	TimerMinim timer = TimerMinim();
 	Effect** effects;
 	uint32_t irKey = 0;
-	uint8_t _showModeSecCounter, _modeValue;
-	bool _showMode = false;;
+	uint8_t showModeSecCounter, modeValue;
+	bool showMode = false;;
+	uint8_t alarmMode; // 0 = disabled, 1 = run once, 2 = everyday, 3 = workdays
+	int8_t alarmHrs, alarmMins;
 public:
 	Mode();
 	~Mode();
@@ -94,16 +97,21 @@ public:
 class RadioMode : public Mode
 {
 private:
-	uint16_t _frequency;
-	uint8_t _volume = 0, _volumeCounter = 0;
+	uint16_t _currentFrequency;
+	uint8_t _volume = 0;
 	bool _showVolume = false;
+	bool _setPreset = false;
+	uint16_t _frequencyPresets[10];
+	const uint32_t _irPresetsKeys[10] { IR_0, IR_1, IR_2, IR_3, IR_4, IR_5, IR_6, IR_7, IR_8, IR_9 };
+	void _tryGetPresetFrequency();
+	void _trySetPresetFrequency();
 protected:
 	void buttonsLoop();
 public:
 	RadioMode::RadioMode(uint32_t timeInterval);
 	void loop();
 	void init(uint8_t param);
-	void setFrequency(uint16_t currentFrequency) { _frequency = currentFrequency; }
+	void setFrequency(uint16_t currentFrequency) { _currentFrequency = currentFrequency; }
 	void show();
 	static void seekProgress(uint16_t currentFrequency);
 };

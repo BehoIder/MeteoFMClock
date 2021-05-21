@@ -55,8 +55,6 @@
 
 #define INDI_COUNT 6 // количество индикаторов
 
-#define DUTY 180        // скважность ШИМ. От скважности зависит напряжение! у меня 175 вольт при значении 180 и 145 вольт при 120
-
 // ======================= ЭФФЕКТЫ =======================
 // эффекты перелистывания часов
 // Выбранный активен при запуске и меняется кнопками
@@ -135,20 +133,21 @@ byte FLIP_SPEED[] = {0, 130, 50, 40, 70, 70}; // скорость эффекто
 #define BACKL_STEP 2        // шаг яркости подсветки день
 #define BACKL_STEP_N 2      // шаг яркости подсветки ночь
 
-
-
 #define ALM_TIMEOUT 30     // таймаут будильника
 
 // ячейки EEPROM
 #define EEPROM_CELL_FLIP_MODE 0
 #define EEPROM_CELL_BACKLIGHT_MODE 1
 #define EEPROM_CELL_GLITCH_MODE 2
-#define EEPROM_CELL_NIGHT_START 3
-#define EEPROM_CELL_NIGHT_END 4
-
 #define EEPROM_CELL_ALARM_HOURS 5
 #define EEPROM_CELL_ALARM_MINUTES 6
 #define EEPROM_CELL_ALARM_MODE 7
+#define EEPROM_CELL_FM_CURRENT_FREQUENCY_L 8
+#define EEPROM_CELL_FM_CURRENT_FREQUENCY_H 9
+#define EEPROM_CELL_FM_VOLUME 10
+#define EEPROM_CELL_FM_0_FREQUENCY_L 11 // to 29
+#define EEPROM_CELL_FM_0_FREQUENCY_H 12 // to 30
+
 
 
 const uint8_t digitMask[] = { 0, 1, 4, 5, 8, 9, 12, 13, 2, 3 };   // маска дешифратора платы in8-2, in14?

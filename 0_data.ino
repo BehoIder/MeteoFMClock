@@ -24,7 +24,6 @@ typedef union transmission_packet
     uint8_t packet[sizeof(float)];
 };
 
-uint8_t alarmMode; // 0 = disabled, 1 = run once, 2 = everyday, 3 = workdays
 MicroDS3231 rtc;
 CL6017S radio;
 GyverBME280 bme280;
@@ -36,7 +35,7 @@ volatile int8_t indiCounter[INDI_COUNT];   // счётчик каждого ин
 volatile int8_t indiDigits[INDI_COUNT];    // цифры, которые должны показать индикаторы (0-10)
 volatile int8_t curIndi;          // текущий индикатор (0-INDI_COUNT)
 
-int8_t hrs, mins, secs, alarmHrs, alarmMins, nightHrStart, nightHrEnd;
+int8_t hrs, mins, secs, nightHrStart, nightHrEnd;
 uint8_t indiMaxBright = INDI_BRIGHT, dotMaxBright = DOT_BRIGHT;
 #ifdef BACKL_PIN
     uint8_t backlMaxBright = BACKL_BRIGHT;

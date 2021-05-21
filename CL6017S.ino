@@ -47,20 +47,19 @@ uint16_t CL6017S::_read16()
 {
     uint8_t hiByte = Wire.read();
     uint8_t loByte = Wire.read();
-    return((hiByte << 8) + loByte);
+    return makeWord(hiByte, loByte);
 }
 
 inline void CL6017S::_write16(uint16_t val)
 {
-    Wire.write(uint8_t((val & 0xFF00) >> 8));
-    Wire.write(uint8_t(val & 0x00FF));
+    Wire.write(highByte(val));
+    Wire.write(lowByte(val));
 }
 
 void CL6017S::_readRSSIRegister()
 {
     Wire.requestFrom(I2C_ADDRESS, 2);
     registers[RADIO_REG_RSSI] = _read16();
-    DEBUG_STR(registers[RADIO_REG_RSSI]);
 }
 
 void CL6017S::_readRegisters(uint8_t count = 6)
@@ -69,7 +68,6 @@ void CL6017S::_readRegisters(uint8_t count = 6)
     for (int i = 0; i < count; i++) 
     {
         registers[i] = _read16();
-        DEBUG_STR(registers[i]);
     }
 }
 
@@ -83,7 +81,6 @@ void CL6017S::_saveCtrlRegister()
 
 void CL6017S::_saveRegisters()
 {
-    DEBUG_STR("_saveRegisters");
     Wire.beginTransmission(I2C_ADDRESS);
     for (int i = 3; i < 6; i++) _write16(registers[i]);
     uint8_t result = Wire.endTransmission();
@@ -103,17 +100,8 @@ bool CL6017S::init()
     result = Wire.endTransmission();
     if (result == 0) // success result
     {
-        DEBUG_STR("radio found");
         _readRegisters();
-
-        registers[RADIO_REG_CTRL] = 0xE481;
-        registers[RADIO_REG_CHANVOL] = 0x3EF8;
-        registers[RADIO_REG_SYSCONFIG] = 0x1F40;
-
-        _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_DISABLE, 0);
-        _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_MUTE, 0);
-        _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_TUNE, 1);
-        _saveRegisters();
+        reset();
         result = true;
     }
     return(result);
@@ -132,9 +120,7 @@ void CL6017S::enable(bool switchOn)
 void CL6017S::setVolume(uint8_t newVolume)
 {
     if (newVolume > MAXVOLUME) newVolume = MAXVOLUME;
-    DEBUG_STR(newVolume);
     uint16_t volume = newVolume << 10;
-    DEBUG_STR(volume);
     registers[RADIO_REG_CHANVOL] &= (~RADIO_REG_CHANVOL_VOL);
     registers[RADIO_REG_CHANVOL] |= volume;
     _saveRegisters();
@@ -197,18 +183,6 @@ bool CL6017S::getSoftMute()
 }
 
 
-void CL6017S::setFrequency(uint16_t newFreq)
-{
-    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_TUNE, 0);
-    _saveCtrlRegister();
-    uint16_t chanFreq = (newFreq - 7000) / 5;
-    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_TUNE, 1);
-    registers[RADIO_REG_CHANVOL] &= (~RADIO_REG_CHANVOL_CHAN);
-    registers[RADIO_REG_CHANVOL] |= chanFreq;
-    _saveRegisters();
-}
-
-
 void CL6017S::seekUp(void(*seekProgress)(uint16_t currentFrequency) = NULL)
 {
     if (_isSeeking) return;
@@ -238,7 +212,7 @@ void CL6017S::seekUp(void(*seekProgress)(uint16_t currentFrequency) = NULL)
             found = true;
         }
         chan = registers[RADIO_REG_READCHAN] & RADIO_REG_READCHAN_CHAN;
-        if (seekProgress != NULL && chan < 760) seekProgress(chan * 5 + 7000);
+        if (seekProgress != nullptr && chan < 760) seekProgress(chan * 5 + 7000);
         delay(50);
     }
     _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_TUNE, 1);
@@ -265,7 +239,7 @@ void CL6017S::seekDown(void(*seekProgress)(uint16_t currentFrequency) = NULL)
     {
         _readRegisters(2);
         chan = registers[RADIO_REG_READCHAN] & RADIO_REG_READCHAN_CHAN;
-        if (seekProgress != NULL && chan < 760) seekProgress(chan * 5 + 7000);
+        if (seekProgress != nullptr && chan < 760) seekProgress(chan * 5 + 7000);
         if (registers[RADIO_REG_RSSI] & RADIO_REG_RSSI_SEEKFAIL)
         {
             _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_SEEK, 0);
@@ -286,16 +260,46 @@ void CL6017S::seekDown(void(*seekProgress)(uint16_t currentFrequency) = NULL)
     _saveRegisters();
     _isSeeking = false;
 }
+
 uint16_t CL6017S::getFrequency()
 {
     _readRegisters(2);
     uint16_t chan = registers[RADIO_REG_READCHAN] & RADIO_REG_READCHAN_CHAN;
-    DEBUG_STR(chan);
     return chan*5 + 7000;
 }
 
-void CL6017S::debugEnable(bool enable)
+void CL6017S::setFrequency(uint16_t newFreq)
 {
-    _debugEnabled = enable;
+    if (_isSeeking) return;
+    _isSeeking = true;
+    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_TUNE, 0);
+    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_SEEK, 0);
+    _saveCtrlRegister();
+    delay(1);
+    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_SEEK, 1);
+    _saveCtrlRegister();
+    delay(1);
+    uint16_t chanFreq = (newFreq - 7000) / 5;
+    registers[RADIO_REG_CHANVOL] &= (~RADIO_REG_CHANVOL_CHAN);
+    registers[RADIO_REG_CHANVOL] |= chanFreq;
+    _saveRegisters();
+    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_SEEK, 0);
+    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_TUNE, 1);
+    _saveCtrlRegister();
+    _isSeeking = false;
 }
+
+
+void CL6017S::reset()
+{
+    registers[RADIO_REG_CTRL] = 0xE481;
+    registers[RADIO_REG_CHANVOL] = 0x3EF8;
+    registers[RADIO_REG_SYSCONFIG] = 0x1F40;
+
+    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_DISABLE, 0);
+    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_MUTE, 0);
+    _setRegisterBit(RADIO_REG_CTRL, RADIO_REG_CTRL_TUNE, 1);
+    _saveRegisters();
+}
+
 
