@@ -1,5 +1,3 @@
-// отправить на индикаторы
-
 void sendToIndicators(uint8_t hours, uint8_t minutes, uint8_t seconds, bool notTime)
 {
     indiDigits[0] = hours / 10;
@@ -10,7 +8,6 @@ void sendToIndicators(uint8_t hours, uint8_t minutes, uint8_t seconds, bool notT
     indiDigits[5] = seconds % 10;
 }
 
-// для эффектов
 void setNewTime() 
 {
     int8_t newHrs = hrs, newMins = mins, newSecs;

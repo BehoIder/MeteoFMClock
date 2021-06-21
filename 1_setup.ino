@@ -1,12 +1,13 @@
 void setup() 
 {
-    Serial.begin(9600);
+    // Serial.begin(9600);
     Wire.begin();
+
     // ---------- RTC -----------
     if (rtc.lostPower()) rtc.setTime(1);
 
     // -------- Radio ---------
-    radio.debugEnable();
+    // radio.debugEnable();
     radio.init();
     radio.enable(false);
 

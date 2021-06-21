@@ -97,7 +97,7 @@ public:
 class RadioMode : public Mode
 {
 private:
-	uint16_t _currentFrequency;
+	uint16_t _currentFrequency = 0;
 	uint8_t _volume = 0;
 	bool _showVolume = false;
 	bool _setPreset = false;

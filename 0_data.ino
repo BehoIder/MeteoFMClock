@@ -109,11 +109,11 @@ byte getPWM_CRT(byte val) {
 }
 #endif
 
-// быстрый digitalWrite
+// fast digitalWrite
 void setPin(uint8_t pin, uint8_t x) 
 {
   switch (pin) 
-  { // откл pwm
+  {
     case 3:  // 2B
       bitClear(TCCR2A, COM2B1);
       break;
@@ -140,7 +140,7 @@ void setPin(uint8_t pin, uint8_t x)
   else return;
 }
 
-// быстрый analogWrite
+// fast analogWrite
 void setPWM(uint8_t pin, uint16_t duty) 
 {
   if (duty == 0) setPin(pin, LOW);

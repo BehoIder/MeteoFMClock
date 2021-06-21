@@ -23,11 +23,11 @@ Mode::~Mode()
 
 void Mode::loop() 
 {
-	// опрос беспроводного метеодатчика
+	// RF read
 	if (_syncTimer.isReady() && secs >= 59 && pressureExt.value != 0)
 	{
 		minutesAfterLastSync++;
-		if (minutesAfterLastSync >= 30) pressureExt.value = 0; // сброс значения если датчик не отвечает 30 минут (чтобы выявить неисправность датчика)
+		if (minutesAfterLastSync >= 30) pressureExt.value = 0; // reset values after wireless meteo sensor not responded during 30 minutes
 	}
 	uint8_t buf[16];
 	uint8_t buflen = 16;
@@ -38,7 +38,7 @@ void Mode::loop()
 		minutesAfterLastSync = 0;
 	}
 
-	// считывание ИК приемника
+	// IR read
 	if (irRecv.decode())
 	{
 		IRData* irResults = irRecv.read();
@@ -47,7 +47,7 @@ void Mode::loop()
 		irRecv.resume();
 	}
 
-	// считывание состояния кнопок
+	// buttons read
 	int analog = analogRead(BUTTONS_PIN);
 	btnLeft.tick(analog <= 1023 && analog > 1000);
 	btnMiddle.tick(analog <= 820 && analog > 690);
@@ -57,6 +57,6 @@ void Mode::loop()
 	buttonsLoop();
 	irKey = 0;
 
-	// текущие эффекты
+	// current effects
 	for (byte i = 0; i < EFFECTS_COUNT; i++) effects[i]->loop();
 };

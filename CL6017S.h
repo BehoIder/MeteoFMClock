@@ -1,6 +1,7 @@
 #ifndef __CL6017S_h__
 #define __CL6017S_h__
 
+#include <Arduino.h>
 #include <Wire.h>
 
 #define DEBUG_STR(txt)           if (_debugEnabled) { Serial.print('>'); Serial.println(txt); }
@@ -33,7 +34,7 @@ public:
 	void	setMono(bool switchOn);   /// Control the mono mode of the radio chip.
 	bool	getMono();                /// Retrieve the current mono mode setting.
 
-	void	debugEnable(bool enable = true) { _debugEnabled = enable; }
+	void	debugEnable(bool enable = true);
 
 	void	reset();
 
