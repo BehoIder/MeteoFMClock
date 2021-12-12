@@ -30,12 +30,14 @@ GyverBME280 bme280;
 IRrecv irRecv(IRDA_PIN);
 
 // переменные
-volatile int8_t indiDimm[INDI_COUNT];      // величина диммирования (0-24)
-volatile int8_t indiCounter[INDI_COUNT];   // счётчик каждого индикатора (0-24)
-volatile int8_t indiDigits[INDI_COUNT];    // цифры, которые должны показать индикаторы (0-10)
-volatile int8_t curIndi;          // текущий индикатор (0-INDI_COUNT)
+volatile int8_t indiDimm[INDI_COUNT];      // dimming value (0-24)
+volatile int8_t indiCounter[INDI_COUNT];   // nixie counter (0-24)
+volatile int8_t indiDigits[INDI_COUNT];    // nixie digit (0-10)
+volatile int8_t curIndi;                   // current nixie (0-INDI_COUNT)
 
 int8_t hrs, mins, secs, nightHrStart, nightHrEnd;
+uint8_t alarmMode; // 0 = disabled, 1 = run once, 2 = everyday, 3 = workdays
+int8_t alarmHrs, alarmMins;
 uint8_t indiMaxBright = INDI_BRIGHT, dotMaxBright = DOT_BRIGHT;
 #ifdef BACKL_PIN
     uint8_t backlMaxBright = BACKL_BRIGHT;
@@ -107,6 +109,21 @@ const uint8_t CRTgamma[256] PROGMEM = {
 byte getPWM_CRT(byte val) {
     return pgm_read_byte(&(CRTgamma[val]));
 }
+#else
+const uint8_t RGBpresets[10][3] =
+{
+    { 0, 0, 128 },
+    { 64, 0, 128 },
+    { 0, 64, 128 },
+    { 0, 128, 0 },
+    { 0, 128, 64 },
+    { 64, 128, 0 },
+    { 128, 0, 0 },
+    { 128, 0, 64 },
+    { 128, 64, 0 },
+    { 128, 128, 128 }
+};
+uint8_t RGBcurrentPreset = 0;
 #endif
 
 // fast digitalWrite

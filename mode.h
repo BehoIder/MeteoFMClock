@@ -8,14 +8,15 @@
 
 enum Modes : uint8_t
 {
-	Main,
-	Setup,
-	Alarm,
-	Weather,
-	Radio
+	Main, // main - clock mode
+	Setup, // setup date-time, alarm
+	Alarm, // alarm mode
+	Weather, // meteo sensors values
+	Radio // FM radio
 };
 
 
+// Base class for all modes
 class Mode 
 {
 private:
@@ -26,9 +27,7 @@ protected:
 	Effect** effects;
 	uint32_t irKey = 0;
 	uint8_t showModeSecCounter, modeValue;
-	bool showMode = false;;
-	uint8_t alarmMode; // 0 = disabled, 1 = run once, 2 = everyday, 3 = workdays
-	int8_t alarmHrs, alarmMins;
+	bool showMode = false;
 public:
 	Mode();
 	~Mode();
@@ -39,7 +38,8 @@ public:
 class MainMode : public Mode 
 {
 private:
-	bool _needRefreshTime = false, _autoShowWeather = false;
+	bool _needRefreshTime = false, 
+		_autoShowWeather = false; // automatically switch to weather mode every minute 
 protected:
 	void buttonsLoop();
 public:
@@ -54,7 +54,7 @@ private:
 	int8_t _changeHrs, _changeMins;
 	uint8_t _changeDay, _changeMonth;
 	uint16_t _changeYear;
-	uint8_t _param; // 0 = time setup, 1 = alarm setup, 2 = night mode setup
+	uint8_t _param; // 0 = time setup, 1 = alarm setup, 2 = night mode setup (unavailable with light sensor using)
 	bool _isHoursSelected, _lampState;
 	uint8_t _setupStage = 0;
 	GButton* _set;

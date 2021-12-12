@@ -43,5 +43,5 @@ void DotBlinkingEffect::loop()
 void DotBlinkingEffect::suspend() 
 {
     Effect::suspend();
-    setPin(DOT_PIN, 0);
+    setPin(DOT_PIN, LOW);
 }

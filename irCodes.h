@@ -1,4 +1,5 @@
 #pragma once
+// define you IR codes here
 
 #define IR_1 0xB14EFE01
 #define IR_2 0xF20DFE01

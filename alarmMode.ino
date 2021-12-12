@@ -32,7 +32,7 @@ void AlarmMode::loop()
 
 void AlarmMode::buttonsLoop() 
 {
-    if (btnMiddle.isClick() || btnLeft.isClick() || btnRight.isClick()) stopAlarm();
+    if (btnMiddle.isClick() || btnLeft.isClick() || btnRight.isClick() || irKey != 0) stopAlarm();
     if (btnMiddle.isHolded() || btnLeft.isHolded() || btnRight.isHolded()) {} // reset events
 }
 

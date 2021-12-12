@@ -28,7 +28,7 @@ void RGBBacklightEffect::suspend()
 void RGBBacklightEffect::loop()
 {
     if (!timer.isReady() || suspended) return;
-    for (uint8_t i = 0; i < LED_COUNT; i++) strip.setPixelColor(i, strip.Color(R, G, B));
+    for (uint8_t i = 0; i < LED_COUNT; i++) strip.setPixelColor(i, strip.Color(RGBpresets[RGBcurrentPreset][0], RGBpresets[RGBcurrentPreset][1], RGBpresets[RGBcurrentPreset][2]));
     if (currentMode == 1) strip.setBrightness(backlMaxBright);
     else if (currentMode == 2 && backlMaxBright > 0)
     {

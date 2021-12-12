@@ -22,12 +22,9 @@ void MainMode::loop()
     if (timer.isReady()) 
     {
         uint8_t dow = getWeekDay();
-        if (hrs == alarmHrs && mins == alarmMins && secs == 0 &&
-            (
-                (alarmMode == 1 || alarmMode == 2) ||
-                (alarmMode == 3 && dow != 1 && dow != 7)
-                ))
+        if (hrs == alarmHrs && mins == alarmMins && secs == 0 && ((alarmMode == 1 || alarmMode == 2) || (alarmMode == 3 && dow != 1 && dow != 7)))
         {
+            //Serial.println("Alarm");
             modeSelector.setMode(Modes::Alarm, 0);
         }
 
@@ -72,6 +69,56 @@ void MainMode::buttonsLoop()
 {
     Effect* effect = NULL;
 
+    switch (irKey)
+    {
+
+    case IR_AUTOWEATHER:
+        _autoShowWeather = !_autoShowWeather;
+        modeValue = _autoShowWeather;
+        showModeSecCounter = 0;
+        showMode = true;
+        break;
+
+    case IR_WEATHER:
+        modeSelector.setMode(Modes::Weather, 0);
+        break;
+
+    case IR_0:
+        RGBcurrentPreset = 0;
+        break;
+    case IR_1:
+        RGBcurrentPreset = 1;
+        break;
+    case IR_2:
+        RGBcurrentPreset = 2;
+        break;
+    case IR_3:
+        RGBcurrentPreset = 3;
+        break;
+    case IR_4:
+        RGBcurrentPreset = 4;
+        break;
+    case IR_5:
+        RGBcurrentPreset = 5;
+        break;
+    case IR_6:
+        RGBcurrentPreset = 6;
+        break;
+    case IR_7:
+        RGBcurrentPreset = 7;
+        break;
+    case IR_8:
+        RGBcurrentPreset = 8;
+        break;
+    case IR_9:
+        RGBcurrentPreset = 9;
+        break;
+
+    default:
+        break;
+
+    }
+
     if (btnRight.isClick() || irKey == IR_SET)  effect = &flip;
     if (btnMiddle.isClick() || irKey == IR_LED) effect = &backlight;
     if (btnLeft.isClick() || irKey == IR_KD) effect = &glitch;
@@ -86,16 +133,7 @@ void MainMode::buttonsLoop()
         showMode = true;
     }
 
-    if (irKey == IR_AUTOWEATHER)
-    {
-        _autoShowWeather = !_autoShowWeather;
-        modeValue = _autoShowWeather;
-        showModeSecCounter = 0;
-        showMode = true;
-    }
-
     if (btnLeft.isHolded()) modeSelector.setMode(Modes::Setup, 0); // date-time setup
     if (btnMiddle.isHolded()) modeSelector.setMode(Modes::Setup, 1); // alarm setup
     if (btnRight.isHolded() || irKey == IR_RADIOONOFF) modeSelector.setMode(Modes::Radio, 0); // radio
-    if (irKey == IR_WEATHER) modeSelector.setMode(Modes::Weather, 0); // weather
 }

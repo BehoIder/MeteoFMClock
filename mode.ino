@@ -10,7 +10,7 @@ void ModeSelector::setMode(Modes mode, uint8_t param)
 
 Mode::Mode()
 {
-	effects = new Effect*[EFFECTS_COUNT] { &glitch, & flip, & backlight, & blink, & night, & burn };
+	effects = new Effect*[EFFECTS_COUNT] { &glitch, &flip, &backlight, &blink, &night, &burn };
 	EEPROM.get(EEPROM_CELL_ALARM_HOURS, alarmHrs);
 	EEPROM.get(EEPROM_CELL_ALARM_MINUTES, alarmMins);
 	EEPROM.get(EEPROM_CELL_ALARM_MODE, alarmMode);

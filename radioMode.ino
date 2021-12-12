@@ -21,6 +21,8 @@ void RadioMode::init(uint8_t param)
 {
 	// disable dot blinking
 	blink.suspend();
+	// disable glitching
+	glitch.suspend();
 	// enable radio
 	radio.enable(true);
 	// set current frequency
@@ -90,6 +92,7 @@ void RadioMode::show()
 			s = (_currentFrequency - 10000) % 100;
 		}
 	}
+	//for (uint8_t i = 0; i < INDI_COUNT; i++) anodeStates[i] = false;
 	sendToIndicators(h, m, s, true);
 }
 
@@ -151,6 +154,7 @@ void RadioMode::buttonsLoop()
 	{
 		radio.enable(false);
 		blink.resume();
+		glitch.resume();
 		modeSelector.setMode(Modes::Main, 0);
 	}
 
